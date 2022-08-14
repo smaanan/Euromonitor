@@ -41,6 +41,8 @@ data.
 
 ## Data Imputation
 
+I fill the `NA` cells with non-`NA` cells after them.
+
 ``` r
 wimax <- wimax %>% 
   pivot_longer(-Country, names_to = "year") %>% 
@@ -59,9 +61,8 @@ to be.
 itu_names <- read_csv("data/itu-emi-countries.csv") %>% 
   rename(Country = `ITU Name`, Cemi = `EMI Name`)
 
-coverage <- read_csv("data/3g data.csv") %>% select(c(1, 42:50)) %>% 
-  select(CountryName, starts_with("Y")) %>% rename(Country = CountryName) %>% 
-  pivot_longer(-Country, names_to = "ds", values_to = "Expln") %>% 
+coverage <- read_csv("data/3g data.csv") %>% select(c("CountryName", "Y2012":"Y2020")) %>% 
+  rename(Country = CountryName) %>% pivot_longer(-Country, names_to = "ds", values_to = "Expln") %>% 
   mutate(ds = as.Date(gsub("^Y", "", ds), format = "%Y"))
 
 n_data <- wimax %>% 
@@ -100,8 +101,7 @@ mdl <- wimax %>%
 I make forecasts, plots and save them.
 
 ``` r
-expln <- read_csv("data/3g data.csv") %>% select(c(1, 42:60)) %>% 
-  select(CountryName, starts_with("Y")) %>% 
+expln <- read_csv("data/3g data.csv") %>% select(c("CountryName", "Y2012":"Y2030")) %>% 
   pivot_longer(-CountryName, names_to = "ds", values_to = "Expln") %>%
   mutate(ds = as.Date(gsub("^Y", "", ds), format = "%Y")) %>%
   rename(Country = CountryName)
@@ -386,41 +386,55 @@ for (plot in plots) {
 
 ## Put Results in CSV File
 
-First we gather the data we want,
+First we gather the data we want.
 
 ``` r
-unnested <- unnest(frs, prediction)
+extradat <- read_csv("data/3g data.csv") %>% select(c("CountryName":"Unit"))
 
-unnested <- data.frame(Country = unnested$Country, Year = year(unnested$ds), Pred = unnested$yhat)
-
-unnested <- spread(unnested, Year, value = Pred)[,c(1, 11:20)]
-
-extradat <- read_csv("data/3g data.csv") %>% select(c(1:6))
-
-unnested <- left_join(unnested, extradat, by = c("Country" = "CountryName"), all.x = TRUE)
-
-unnested <- left_join(unnested, n_data, by = "Country", all.x = TRUE)
-
-unnested <- unnested[, c(1, 12:25, 2:11)]
+unnested <- unnest(frs, prediction) %>% 
+  mutate(Year = year(ds), Pred = yhat) %>% select(Country, Year, Pred) %>% 
+  spread(Year, value = Pred) %>% select("Country", "2021":"2030") %>% 
+  left_join(extradat, by = c("Country" = "CountryName"), all.x = TRUE) %>% 
+  left_join(n_data, by = "Country", all.x = TRUE) %>% 
+  select("Country","CountryCode":"2020","2021":"2030")
 ```
 
 We need to remove the data that is unwanted.
 
 ``` r
-exceptions <- read_csv("data/WiMAX exceptions.csv")
+exceptions <- read_csv("data/WiMAX exceptions.csv") %>% 
+  filter(!row_number() %in% c(10, 14)) %>% 
+  select(c(1,3)) %>% mutate(Years = gsub('Y','', Years))
 
-exceptions = exceptions[-c(10, 14), c(1, 3)]
-
-exceptions$Years = gsub('Y','', exceptions$Years)
-
-Count = exceptions$CountryName
-
-Year  = exceptions$Years
+Count <- exceptions$CountryName
+Year  <- exceptions$Years
 
 for (i in seq_along(Count)) {
   unnested[unnested$Country == Count[i], ][[Year[i]]] <- NA
 }
+
+unnested
 ```
+
+    ## # A tibble: 124 × 25
+    ##    Country    Countr…¹ Count…² Produ…³ Produ…⁴ Unit  `2012` `2013` `2014` `2015`
+    ##    <chr>      <chr>      <dbl>   <dbl> <chr>   <chr>  <dbl>  <dbl>  <dbl>  <dbl>
+    ##  1 Albania    AB           158  178271 Percen… % of…   0       0      0     35  
+    ##  2 Algeria    AL           164  178271 Percen… % of…   0       0      0      0  
+    ##  3 Angola     AG           161  178271 Percen… % of…   7       7      7      7  
+    ##  4 Argentina  AR           167  178271 Percen… % of…   0       0      0     65  
+    ##  5 Armenia    AM           165  178271 Percen… % of…  17.5    44     46     46.5
+    ##  6 Australia  AU           170  178271 Percen… % of…  52.2    85     95     94  
+    ##  7 Austria    AT           169  178271 Percen… % of…  31.6    58.4   85     98  
+    ##  8 Azerbaijan AJ           163  178271 Percen… % of…   6.68   14.3   49     39  
+    ##  9 Bahrain    BH           177  178271 Percen… % of…  88.6    88.6   95.6   NA  
+    ## 10 Bangladesh BG           176  178271 Percen… % of…  59      59     59     65  
+    ## # … with 114 more rows, 15 more variables: `2016` <dbl>, `2017` <dbl>,
+    ## #   `2018` <dbl>, `2019` <dbl>, `2020` <dbl>, `2021` <dbl>, `2022` <dbl>,
+    ## #   `2023` <dbl>, `2024` <dbl>, `2025` <dbl>, `2026` <dbl>, `2027` <dbl>,
+    ## #   `2028` <dbl>, `2029` <dbl>, `2030` <dbl>, and abbreviated variable names
+    ## #   ¹​CountryCode, ²​CountryCodeID, ³​ProductID, ⁴​ProductName
+    ## # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names
 
 We can now save the data.
 
