@@ -412,29 +412,7 @@ Year  <- exceptions$Years
 for (i in seq_along(Count)) {
   unnested[unnested$Country == Count[i], ][[Year[i]]] <- NA
 }
-
-unnested
 ```
-
-    ## # A tibble: 124 × 25
-    ##    Country    Countr…¹ Count…² Produ…³ Produ…⁴ Unit  `2012` `2013` `2014` `2015`
-    ##    <chr>      <chr>      <dbl>   <dbl> <chr>   <chr>  <dbl>  <dbl>  <dbl>  <dbl>
-    ##  1 Albania    AB           158  178271 Percen… % of…   0       0      0     35  
-    ##  2 Algeria    AL           164  178271 Percen… % of…   0       0      0      0  
-    ##  3 Angola     AG           161  178271 Percen… % of…   7       7      7      7  
-    ##  4 Argentina  AR           167  178271 Percen… % of…   0       0      0     65  
-    ##  5 Armenia    AM           165  178271 Percen… % of…  17.5    44     46     46.5
-    ##  6 Australia  AU           170  178271 Percen… % of…  52.2    85     95     94  
-    ##  7 Austria    AT           169  178271 Percen… % of…  31.6    58.4   85     98  
-    ##  8 Azerbaijan AJ           163  178271 Percen… % of…   6.68   14.3   49     39  
-    ##  9 Bahrain    BH           177  178271 Percen… % of…  88.6    88.6   95.6   NA  
-    ## 10 Bangladesh BG           176  178271 Percen… % of…  59      59     59     65  
-    ## # … with 114 more rows, 15 more variables: `2016` <dbl>, `2017` <dbl>,
-    ## #   `2018` <dbl>, `2019` <dbl>, `2020` <dbl>, `2021` <dbl>, `2022` <dbl>,
-    ## #   `2023` <dbl>, `2024` <dbl>, `2025` <dbl>, `2026` <dbl>, `2027` <dbl>,
-    ## #   `2028` <dbl>, `2029` <dbl>, `2030` <dbl>, and abbreviated variable names
-    ## #   ¹​CountryCode, ²​CountryCodeID, ³​ProductID, ⁴​ProductName
-    ## # ℹ Use `print(n = ...)` to see more rows, and `colnames()` to see all variable names
 
 We can now save the data.
 

@@ -170,8 +170,6 @@ Year  <- exceptions$Years
 for (i in seq_along(Count)) {
   unnested[unnested$Country == Count[i], ][[Year[i]]] <- NA
 }
-
-unnested
 ```
 
 We can now save the data.
